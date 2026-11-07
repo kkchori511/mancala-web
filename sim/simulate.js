@@ -67,7 +67,8 @@ function run(cfg, strat) {
 
 const B = { players: 4, pits: 5, seeds: 4 };
 const configs = [
-  { ...B, noExtraMoves: 1, storeBonus: [0, 1, 2, 2], label: 'E. A + 시작점수 0/1/2/2' },
+  { ...B, noExtraMoves: 4, label: 'B. 모두 첫 턴 추가턴 없음' },
+  { ...B, noExtraMoves: 4, storeBonus: [0, 1, 2, 3], label: 'B2. B + 시작점수 0/1/2/3' },
   { ...B, noExtraMoves: 1, storeBonus: [0, 1, 2, 3], label: 'E2. A + 시작점수 0/1/2/3' },
 ];
 const rows = [];
