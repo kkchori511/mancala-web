@@ -282,7 +282,7 @@ export class BoardView {
   async captureBeam(from, to, color, balls, ms) {
     const [x0, y0] = this.center(from), [x1, y1] = this.center(to);
     const beam = document.createElementNS(NS, 'g');
-    beam.innerHTML = `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="26" stroke-linecap="round" opacity=".35" filter="url(#beamGlow)"/>
+    beam.innerHTML = `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="34" stroke-linecap="round" opacity=".75" filter="url(#beamGlow)"/>
       <line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#fff" stroke-width="6" stroke-linecap="round" class="beam-core"/>`;
     beam.setAttribute('class', 'beam');
     this.fx.appendChild(beam);
