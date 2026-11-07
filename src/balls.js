@@ -42,7 +42,11 @@ export function ballSVG(n, cx, cy, r, opts = {}) {
     const big = opts.top;
     const fs = big ? (n >= 10 ? r * 0.74 : r * 0.92) : (n >= 10 ? r * 0.52 : r * 0.64);
     s += `<circle r="${f(r * (big ? 0.64 : 0.47))}" fill="#fff"/>`;
-    s += `<text y="${f(fs * 0.36)}" text-anchor="middle" font-size="${f(fs)}" class="ball-num">${n}</text>`;
+    // numRot: 번호를 돌려 보여 줄 각도(상대가 읽도록). 뒤집히면 6·9 구분 밑줄
+    const rot = opts.numRot || 0;
+    const mark = rot === 180 && /[69]/.test(String(n))
+      ? `<rect x="${f(-fs * 0.3)}" y="${f(fs * 0.46)}" width="${f(fs * 0.6)}" height="${f(Math.max(1.5, fs * 0.08))}" rx="1" fill="#111"/>` : '';
+    s += `<g${rot ? ` transform="rotate(${rot})"` : ''}><text y="${f(fs * 0.36)}" text-anchor="middle" font-size="${f(fs)}" class="ball-num">${n}</text>${mark}</g>`;
   }
   s += `<circle r="${f(r)}" fill="url(#ballShine)"/>`;
   if (opts.dim) s += `<circle r="${f(r)}" fill="#2a1a0a" opacity="${opts.dim}"/>`;
@@ -105,6 +109,6 @@ export function pileSVG(count, shape, opts = {}) {
     const [px, py] = toXY(slots[i]);
     s += ballSVG(startNum + i, px, py, smallR);
   }
-  s += ballSVG(count, cx, cy, bigR, { top: true });
+  s += ballSVG(count, cx, cy, bigR, { top: true, numRot: opts.topRot || 0 });
   return s;
 }

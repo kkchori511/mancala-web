@@ -136,6 +136,8 @@ export class BoardView {
     if (!cell || !el) return;
     const opts = this.players === 4 ? { bigScale: 0.45, smallScale: 0.22 } : {};
     if (cell.kind === 'store') Object.assign(opts, this.players === 4 ? { bigScale: 0.36, smallScale: 0.14 } : { bigScale: 0.44, smallScale: 0.19 });
+    // 2인 저장고: 가운데 공 번호는 상대 방향(점수 칸은 주인 방향)
+    if (cell.kind === 'store' && this.players === 2) opts.topRot = this.textRot(1 - cell.owner);
     el.querySelector('.pile').innerHTML = pileSVG(n, cell.shape, opts);
     if (cell.kind === 'store') this.setScore(cell.owner, n);
   }
