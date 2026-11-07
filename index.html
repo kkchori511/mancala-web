@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f3efe9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>만칼라</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="app">
+
+  <!-- 시작 화면 -->
+  <section id="start" class="screen">
+    <div class="start-wrap">
+      <h1 class="logo">만칼라</h1>
+      <p class="sub">공을 나눠 담아 내 저장고를 채우는 보드게임</p>
+
+      <div id="resumeBox" class="resume hidden">
+        <button class="btn primary" id="resumeBtn">이어 하기</button>
+        <span id="resumeInfo"></span>
+      </div>
+
+      <div class="modes">
+        <button class="mode-card" data-mode="2p">
+          <span class="mode-title">둘이 하기</span>
+          <span class="mode-desc">한 기기에서 번갈아</span>
+        </button>
+        <div class="mode-card ai-card">
+          <span class="mode-title">컴퓨터와 하기</span>
+          <span class="seg">
+            <button data-mode="ai" data-level="easy">쉬움</button>
+            <button data-mode="ai" data-level="normal">보통</button>
+          </span>
+        </div>
+        <button class="mode-card" data-mode="4p" id="fourBtn">
+          <span class="mode-title">넷이 하기</span>
+          <span class="mode-desc" id="fourDesc">모니터·태블릿 전용</span>
+        </button>
+      </div>
+
+      <details class="names">
+        <summary>이름 바꾸기</summary>
+        <div class="name-grid">
+          <label>1번 <input maxlength="6" data-name="0" placeholder="P1"></label>
+          <label>2번 <input maxlength="6" data-name="1" placeholder="P2"></label>
+          <label>3번 <input maxlength="6" data-name="2" placeholder="P3"></label>
+          <label>4번 <input maxlength="6" data-name="3" placeholder="P4"></label>
+        </div>
+      </details>
+
+      <div class="start-foot">
+        <button class="btn ghost" data-open="rules">룰 보기</button>
+        <button class="btn ghost" data-open="settings">설정</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4인 화면 방식 선택 -->
+  <section id="fourPick" class="screen hidden">
+    <div class="start-wrap">
+      <h2>넷이 하기 — 화면 방식</h2>
+      <div class="pick-grid">
+        <button class="pick-card" data-display="monitor">
+          <svg viewBox="0 0 200 130" class="pick-ill">
+            <rect x="20" y="8" width="160" height="96" rx="8" fill="#fff" stroke="#bba98c" stroke-width="3"/>
+            <rect x="72" y="18" width="56" height="56" rx="6" fill="#eadfcd" stroke="#bba98c"/>
+            <rect x="92" y="104" width="16" height="12" fill="#bba98c"/>
+            <g fill="#2a9d8f"><circle cx="55" cy="124" r="6"/></g><g fill="#e9806e"><circle cx="85" cy="124" r="6"/></g>
+            <g fill="#3d4e7a"><circle cx="115" cy="124" r="6"/></g><g fill="#93b94a"><circle cx="145" cy="124" r="6"/></g>
+          </svg>
+          <span class="mode-title">모니터</span>
+          <span class="mode-desc">모두 같은 방향에서 화면을 보며 마우스로 진행</span>
+        </button>
+        <button class="pick-card" data-display="tablet">
+          <svg viewBox="0 0 200 130" class="pick-ill">
+            <rect x="60" y="25" width="80" height="80" rx="8" fill="#eadfcd" stroke="#bba98c" stroke-width="3"/>
+            <circle cx="100" cy="120" r="7" fill="#2a9d8f"/><circle cx="155" cy="65" r="7" fill="#e9806e"/>
+            <circle cx="100" cy="10" r="7" fill="#3d4e7a"/><circle cx="45" cy="65" r="7" fill="#93b94a"/>
+          </svg>
+          <span class="mode-title">태블릿</span>
+          <span class="mode-desc">태블릿을 가운데 두고 네 명이 둘러앉아 진행</span>
+        </button>
+      </div>
+      <button class="btn ghost" id="fourBack">뒤로</button>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="game" class="screen hidden">
+    <div id="stage"></div>
+    <button id="menuBtn" class="menu-btn" aria-label="메뉴">☰</button>
+    <div id="overlay"></div>
+  </section>
+
+</main>
+
+<!-- 공용 창 -->
+<div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
