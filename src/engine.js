@@ -4,14 +4,14 @@
 
 // noExtraMoves: 게임 처음 n수 동안은 추가 턴 없음 (선 차례 보정)
 // storeBonus: 자리별 시작 점수 (선 차례 보정)
-export function createGame({ players = 2, pits = 6, seeds = 4, noExtraMoves = 0, storeBonus = null } = {}) {
+export function createGame({ players = 2, pits = 6, seeds = 4, noExtraMoves = 0, storeBonus = null, start = 0 } = {}) {
   const size = players * (pits + 1);
   const board = new Array(size).fill(0);
   for (let p = 0; p < players; p++) {
     for (let i = 0; i < pits; i++) board[p * (pits + 1) + i] = seeds;
   }
   if (storeBonus) for (let p = 0; p < players; p++) board[p * (pits + 1) + pits] = storeBonus[p] ?? 0;
-  return { players, pits, seeds, board, current: 0, over: false, moveCount: 0, noExtraMoves };
+  return { players, pits, seeds, board, current: start, start, over: false, moveCount: 0, noExtraMoves };
 }
 
 export const base = (g, p) => p * (g.pits + 1);
@@ -95,3 +95,20 @@ export const scores = (g) => Array.from({ length: g.players }, (_, p) => g.board
 export function cloneGame(g) {
   return { ...g, board: g.board.slice() };
 }
+
+// 4인 보정 규칙을 적용한 설정. 시작하는 사람 기준으로 1·2번째 사람의 첫 수는 추가 턴 없음, 2번째 사람 1점.
+export function fourPlayerConfig(start = 0, balance = true) {
+  const cfg = { players: 4, pits: 5, seeds: 4, start };
+  if (balance) {
+    cfg.noExtraMoves = 2;
+    cfg.storeBonus = [0, 0, 0, 0];
+    cfg.storeBonus[(start + 1) % 4] = 1;
+  }
+  return cfg;
+}
+
+export const twoPlayerConfig = (start = 0) => ({ players: 2, pits: 6, seeds: 4, start });
+
+// 이어 하기 저장용
+export const serialize = (g) => JSON.stringify(g);
+export const deserialize = (str) => JSON.parse(str);

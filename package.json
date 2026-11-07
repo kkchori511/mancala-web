@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "sim": "node sim/simulate.js"
+    "sim": "node sim/simulate.js",
+    "test": "node test/engine.test.js"
   }
 }
