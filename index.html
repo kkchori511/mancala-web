@@ -14,45 +14,50 @@
   <!-- 시작 화면 -->
   <section id="start" class="screen">
     <div class="start-wrap">
-      <h1 class="logo">만칼라</h1>
-      <p class="sub">공을 나눠 담아 내 저장고를 채우는 보드게임</p>
-
-      <div id="resumeBox" class="resume hidden">
-        <button class="btn primary" id="resumeBtn">이어 하기</button>
-        <span id="resumeInfo"></span>
+      <div class="start-head">
+        <div class="logo-balls" id="logoBalls" aria-hidden="true"></div>
+        <h1 class="logo">만칼라</h1>
+        <p class="sub">공을 나눠 담아 내 저장고를 채우는 보드게임</p>
       </div>
 
-      <div class="modes">
-        <button class="mode-card" data-mode="2p">
-          <span class="mode-title">둘이 하기</span>
-          <span class="mode-desc">한 기기에서 번갈아</span>
-        </button>
-        <div class="mode-card ai-card">
-          <span class="mode-title">컴퓨터와 하기</span>
-          <span class="seg">
-            <button data-mode="ai" data-level="easy">쉬움</button>
-            <button data-mode="ai" data-level="normal">보통</button>
-          </span>
+      <div class="start-body">
+        <div id="resumeBox" class="resume hidden">
+          <button class="btn primary" id="resumeBtn">이어 하기</button>
+          <span id="resumeInfo"></span>
         </div>
-        <button class="mode-card" data-mode="4p" id="fourBtn">
-          <span class="mode-title">넷이 하기</span>
-          <span class="mode-desc" id="fourDesc">모니터·태블릿 전용</span>
-        </button>
-      </div>
 
-      <details class="names">
-        <summary>이름 바꾸기</summary>
-        <div class="name-grid">
-          <label>1번 <input maxlength="6" data-name="0" placeholder="P1"></label>
-          <label>2번 <input maxlength="6" data-name="1" placeholder="P2"></label>
-          <label>3번 <input maxlength="6" data-name="2" placeholder="P3"></label>
-          <label>4번 <input maxlength="6" data-name="3" placeholder="P4"></label>
+        <div class="modes">
+          <button class="mode-card" data-mode="2p">
+            <span class="mode-title">둘이 하기</span>
+            <span class="mode-desc">한 기기에서 마주 보고</span>
+          </button>
+          <div class="mode-card ai-card">
+            <span class="mode-title">컴퓨터와 하기</span>
+            <span class="seg">
+              <button data-mode="ai" data-level="easy">쉬움</button>
+              <button data-mode="ai" data-level="normal">보통</button>
+            </span>
+          </div>
+          <button class="mode-card" data-mode="4p" id="fourBtn">
+            <span class="mode-title">넷이 하기</span>
+            <span class="mode-desc" id="fourDesc">모니터·태블릿 전용</span>
+          </button>
         </div>
-      </details>
 
-      <div class="start-foot">
-        <button class="btn ghost" data-open="rules">룰 보기</button>
-        <button class="btn ghost" data-open="settings">설정</button>
+        <details class="names">
+          <summary>이름 바꾸기</summary>
+          <div class="name-grid">
+            <label>1번 <input maxlength="6" data-name="0" placeholder="P1"></label>
+            <label>2번 <input maxlength="6" data-name="1" placeholder="P2"></label>
+            <label>3번 <input maxlength="6" data-name="2" placeholder="P3"></label>
+            <label>4번 <input maxlength="6" data-name="3" placeholder="P4"></label>
+          </div>
+        </details>
+
+        <div class="start-foot">
+          <button class="btn ghost" data-open="rules">룰 보기</button>
+          <button class="btn ghost" data-open="settings">설정</button>
+        </div>
       </div>
     </div>
   </section>

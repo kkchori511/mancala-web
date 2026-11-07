@@ -3,6 +3,7 @@ import { chooseMove } from './ai.js';
 import { layout2pLandscape, layout2pPortrait, layout4p } from './geometry.js';
 import { BoardView, PLAYER_COLORS } from './board.js';
 import { play, setSound, unlockAudio } from './sound.js';
+import { BALL_DEFS, ballSVG } from './balls.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -348,7 +349,9 @@ function goHome() {
   game = null; view = null;
   $('#stage').innerHTML = '';
   show('start');
-  refreshStart();
+  // 시작 화면 장식: 당구공 몇 개
+$('#logoBalls').innerHTML = `<svg viewBox="0 0 300 76"><defs>${BALL_DEFS}</defs>${[[34, 44, 1], [92, 40, 2], [150, 34, 8], [208, 40, 3], [266, 44, 9]].map(([x, y, n]) => ballSVG(n, x, y, 26, { top: n === 8 })).join('')}</svg>`;
+refreshStart();
 }
 
 // ───────── 공용 창 ─────────
@@ -509,4 +512,6 @@ window.addEventListener('resize', () => {
 // 디버그/테스트용
 window.__mancala = { get game() { return game; }, get cfg() { return cfg; }, get view() { return view; }, get busy() { return busy; }, settings };
 
+// 시작 화면 장식: 당구공 몇 개
+$('#logoBalls').innerHTML = `<svg viewBox="0 0 300 76"><defs>${BALL_DEFS}</defs>${[[34, 44, 1], [92, 40, 2], [150, 34, 8], [208, 40, 3], [266, 44, 9]].map(([x, y, n]) => ballSVG(n, x, y, n === 8 ? 30 : 24, { top: n === 8 })).join('')}</svg>`;
 refreshStart();
