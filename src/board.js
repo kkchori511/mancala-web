@@ -134,8 +134,8 @@ export class BoardView {
     const cell = this.L.cells[i];
     const el = this.cellEls[i];
     if (!cell || !el) return;
-    const opts = this.players === 4 ? { bigScale: 0.36, smallScale: 0.22 } : {};
-    if (cell.kind === 'store') Object.assign(opts, this.players === 4 ? { bigScale: 0.27, smallScale: 0.14 } : { bigScale: 0.36, smallScale: 0.19 });
+    const opts = this.players === 4 ? { bigScale: 0.45, smallScale: 0.22 } : {};
+    if (cell.kind === 'store') Object.assign(opts, this.players === 4 ? { bigScale: 0.36, smallScale: 0.14 } : { bigScale: 0.44, smallScale: 0.19 });
     el.querySelector('.pile').innerHTML = pileSVG(n, cell.shape, opts);
     if (cell.kind === 'store') this.setScore(cell.owner, n);
   }

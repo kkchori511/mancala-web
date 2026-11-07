@@ -39,8 +39,9 @@ export function ballSVG(n, cx, cy, r, opts = {}) {
     }
   }
   if (n > 0 && !opts.dim) {
-    const fs = n >= 10 ? r * 0.52 : r * 0.64;
-    s += `<circle r="${f(r * 0.47)}" fill="#fff"/>`;
+    const big = opts.top;
+    const fs = big ? (n >= 10 ? r * 0.74 : r * 0.92) : (n >= 10 ? r * 0.52 : r * 0.64);
+    s += `<circle r="${f(r * (big ? 0.64 : 0.47))}" fill="#fff"/>`;
     s += `<text y="${f(fs * 0.36)}" text-anchor="middle" font-size="${f(fs)}" class="ball-num">${n}</text>`;
   }
   s += `<circle r="${f(r)}" fill="url(#ballShine)"/>`;
@@ -57,22 +58,15 @@ export function pileSVG(count, shape, opts = {}) {
   if (!count) return '';
   let s = '';
   if (shape.kind === 'circle') {
-    // 2-B안: 공 크기 고정, 윗층 가운데 1 + 둘레 6, 아랫층 최대 6
+    // 가운데 공 지름 = 칸 지름의 70%(면적 약 50%). 나머지는 뒤 둘레로 살짝 보임(최대 6개)
     const { cx, cy, r: R } = shape;
-    const b = R * 0.27;
-    const lower = Math.min(Math.max(count - 7, 0), 6);
-    for (let i = 0; i < lower; i++) {
-      const a = -Math.PI / 2 + Math.PI / 6 + (i * Math.PI) / 3;
-      s += ballSVG(count - 7 - lower + 1 + i, cx + Math.cos(a) * 2.45 * b, cy + Math.sin(a) * 2.45 * b, b * 0.95, { dim: 0.45 });
-    }
-    const k = Math.min(count, 7) - 1;
+    const bigR = R * 0.7, b = R * 0.27;
+    const k = Math.min(count - 1, 6);
     for (let i = 0; i < k; i++) {
-      let x, y;
-      if (k === 1) { x = -1.15 * b; y = 0; }
-      else { const a = -Math.PI / 2 + (i * 2 * Math.PI) / k; x = Math.cos(a) * 2.2 * b; y = Math.sin(a) * 2.2 * b; }
-      s += ballSVG(count - k + i, cx + x, cy + y, b);
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / Math.max(k, 1) + (k === 1 ? Math.PI / 4 : 0);
+      s += ballSVG(count - k + i, cx + Math.cos(a) * R * 0.66, cy + Math.sin(a) * R * 0.66, b);
     }
-    s += ballSVG(count, cx + (k === 1 ? 1.15 * b : 0), cy, k ? b * 1.4 : b, { top: k > 0 });
+    s += ballSVG(count, cx, cy, bigR, { top: true });
     return s;
   }
 
@@ -81,7 +75,7 @@ export function pileSVG(count, shape, opts = {}) {
   const cx = x + w / 2, cy = y + h / 2;
   const tall = h >= w;
   const short = Math.min(w, h), long = Math.max(w, h);
-  const bigR = short * (opts.bigScale ?? 0.35);
+  const bigR = short * (opts.bigScale ?? 0.45);
   const smallR = short * (opts.smallScale ?? 0.21);
   const toXY = ([u, v]) => (tall ? [cx + v, cy + u] : [cx + u, cy + v]);
   let slots = [];
@@ -111,6 +105,6 @@ export function pileSVG(count, shape, opts = {}) {
     const [px, py] = toXY(slots[i]);
     s += ballSVG(startNum + i, px, py, smallR);
   }
-  s += ballSVG(count, cx, cy, count > 1 ? bigR : smallR * 1.2, { top: count > 1 });
+  s += ballSVG(count, cx, cy, bigR, { top: true });
   return s;
 }
