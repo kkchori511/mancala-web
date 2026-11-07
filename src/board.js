@@ -73,7 +73,7 @@ export class BoardView {
         s += shapeSVG(cell.shape, 'fill="url(#pitShade)"');
         s += shapeSVG(cell.shape, 'fill="url(#rimLight)" opacity=".7"');
       }
-      s += `<g class="pile"></g><g class="mark"></g>`;
+      s += `<g class="sel"></g><g class="pile"></g><g class="mark"></g>`;
       // 누르는 영역 (투명)
       s += shapeSVG(cell.kind === 'store' ? fr : cell.shape, 'class="hit" fill="transparent"');
       s += `</g>`;
@@ -166,7 +166,19 @@ export class BoardView {
           ? `<rect x="${fr.x - 8}" y="${fr.y - 8}" width="${fr.w + 16}" height="${fr.h + 16}" rx="${fr.rx + 8}" fill="none" stroke="${PLAYER_COLORS[p]}" stroke-width="6" filter="url(#glow)" class="pulse"/>`
           : '';
       }
-      el.classList.toggle('selectable', selectable.includes(i));
+      const on = selectable.includes(i);
+      el.classList.toggle('selectable', on);
+      // 고를 수 있는 칸: 지금 차례인 사람 색 테두리
+      const sel = el.querySelector('.sel');
+      if (sel) {
+        if (on && cell.kind === 'pit') {
+          const sh = cell.shape, pad = 5;
+          const big = sh.kind === 'circle'
+            ? { kind: 'circle', cx: sh.cx, cy: sh.cy, r: sh.r + pad }
+            : { kind: 'rect', x: sh.x - pad, y: sh.y - pad, w: sh.w + 2 * pad, h: sh.h + 2 * pad, rx: sh.rx + pad };
+          sel.innerHTML = shapeSVG(big, `fill="none" stroke="${PLAYER_COLORS[p]}" stroke-width="5" filter="url(#glow)" class="pulse"`);
+        } else sel.innerHTML = '';
+      }
     });
     this.svg.querySelectorAll('.badge').forEach((b) => {
       const on = +b.dataset.p === p;
