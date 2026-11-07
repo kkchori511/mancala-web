@@ -173,3 +173,9 @@ h2 { margin: 0 0 4px; }
 .rules-full li { margin-bottom: .5em; }
 .rules-full .btn.big { display: block; margin: 0 auto; }
 .btn.big { font-size: clamp(20px, 3.2vmin, 34px); padding: .7em 2.2em; }
+
+/* 이름 입력: 칸 폭 안에 맞추기, iPhone 확대 방지(16px 이상), 넘칠 때 위가 잘리지 않게 */
+.name-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.name-grid label { min-width: 0; }
+.name-grid input { width: 100%; min-width: 0; font-size: 16px; }
+.start-wrap { justify-content: safe center; }
