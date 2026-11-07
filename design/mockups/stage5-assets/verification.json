@@ -1,0 +1,30 @@
+[
+  {
+    "compared_pixels_outside_requested_regions" : 1798612,
+    "different_pixels_outside_requested_regions" : 0,
+    "file" : "4p-tablet-v3.png",
+    "height" : 1536,
+    "width" : 2048
+  },
+  {
+    "compared_pixels_outside_requested_regions" : 1271788,
+    "different_pixels_outside_requested_regions" : 0,
+    "file" : "4p-monitor-v3.png",
+    "height" : 1080,
+    "width" : 1920
+  },
+  {
+    "compared_pixels_outside_requested_regions" : 2137030,
+    "different_pixels_outside_requested_regions" : 0,
+    "file" : "phone-p1-turn-v3.png",
+    "height" : 2340,
+    "width" : 1080
+  },
+  {
+    "compared_pixels_outside_requested_regions" : 1229996,
+    "different_pixels_outside_requested_regions" : 0,
+    "file" : "2p-landscape-v3.png",
+    "height" : 900,
+    "width" : 1600
+  }
+]
