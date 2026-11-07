@@ -418,32 +418,15 @@ function openSettings() {
 
 function openRules() { openModal(rulesHTML() + '<div class="actions"><button class="btn primary" data-act="close">닫기</button></div>', (a) => { if (a === 'close') closeModal(); }); }
 
-// 4인 시작 룰 안내: 모니터는 하나, 태블릿은 네 방향에 각각
+// 4인 시작 룰 안내: 전체 화면에 크게, 확인 버튼 하나 (모니터·태블릿 공통)
 function rulesAck() {
   return new Promise((resolve) => {
-    if (cfg.display === 'monitor') {
-      openModal(`<div class="rules"><h3>4인 전용 룰</h3><ul>${fourRulesItems()}</ul></div><div class="actions"><button class="btn primary" data-act="ok">모두 확인했어요</button></div>`, (a) => { if (a === 'ok') { closeModal(); resolve(); } }, false);
-      return;
-    }
-    const wrap = document.createElement('div');
-    wrap.className = 'ack-wrap';
-    const done = new Set();
-    for (let p = 0; p < 4; p++) {
-      const rot = [0, -90, 180, 90][p];
-      const d = [[0, 1], [1, 0], [0, -1], [-1, 0]][p];
-      const card = document.createElement('div');
-      card.className = 'ack';
-      card.style.borderTop = `6px solid ${PLAYER_COLORS[p]}`;
-      card.style.transform = `translate(-50%, -50%) translate(${d[0] * 24}vmin, ${d[1] * 24}vmin) rotate(${rot}deg)`;
-      card.innerHTML = `<h4>${esc(nameOf(p))} · 4인 전용 룰</h4><ul>${fourRulesItems()}</ul><button class="btn primary" style="background:${PLAYER_COLORS[p]}">확인</button>`;
-      card.querySelector('button').addEventListener('click', () => {
-        unlockAudio(); play('select');
-        done.add(p); card.classList.add('done'); card.querySelector('button').textContent = '확인 완료';
-        if (done.size === 4) { wrap.remove(); resolve(); }
-      });
-      wrap.appendChild(card);
-    }
-    $('#overlay').appendChild(wrap);
+    const el = document.createElement('div');
+    el.className = 'rules-full';
+    el.innerHTML = `<div class="rules-full-card"><h2>넷이 하기 · 전용 룰</h2><ul>${fourRulesItems()}</ul>
+      <button class="btn primary big" data-act="ok">확인하고 시작</button></div>`;
+    el.querySelector('[data-act="ok"]').addEventListener('click', () => { unlockAudio(); play('select'); el.remove(); resolve(); });
+    $('#overlay').appendChild(el);
   });
 }
 
