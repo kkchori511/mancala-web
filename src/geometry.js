@@ -59,7 +59,7 @@ export function layout2pPortrait(view = 0) {
   cells[ob0 + 6] = {
     kind: 'store', owner: other, frame: rect(sx, ty, sw, sh, 60),
     shape: rect(sx + sw * split + 6, ty + 10, sw * (1 - split) - 16, sh - 20, 50),
-    score: { x: sx + 10, y: ty + 10, w: sw * split - 14, h: sh - 20, rot: 0 },
+    score: { x: sx + 10, y: ty + 10, w: sw * split - 14, h: sh - 20, rot: 180 },
   };
   const arrows = [
     [38, 300, 38, 1250], // 왼쪽 ↓ (view 칸 방향)
@@ -67,7 +67,7 @@ export function layout2pPortrait(view = 0) {
     [682, 1250, 682, 300], // 오른쪽 ↑
     [600, 36, 120, 36], // 위 ←
   ];
-  return { vb, board, cells, arrows, center: { x: 360, y: 780 }, seatAngle: [0, 0], kind: '2p-port', view };
+  return { vb, board, cells, arrows, center: { x: 360, y: 780 }, seatAngle: [0, 180], kind: '2p-port', view };
 }
 
 // 4인: 정사각형 보드. P1 아래(왼→오) 저장고 오른쪽 아래, P2 오른쪽(아래→위) 저장고 오른쪽 위,

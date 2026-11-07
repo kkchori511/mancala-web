@@ -85,9 +85,8 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 function makeLayout() {
   if (cfg.mode === '4p') return layout4p(cfg.display);
   if (isPortrait()) {
-    // 같이 하기: 지금 차례인 사람이 아래. 컴퓨터와 하기: 사람(0)이 항상 아래
-    const v = cfg.mode === 'ai' ? 0 : game.current;
-    return layout2pPortrait(v);
+    // 마주 보고 하기: P1(사람)이 아래, P2가 위. 보드는 돌리지 않음
+    return layout2pPortrait(0);
   }
   return layout2pLandscape();
 }
@@ -131,8 +130,6 @@ async function startGame(newCfg, resume = null) {
 async function nextTurn() {
   if (game.over) { finish(); return; }
   const p = game.current;
-  // 스마트폰 세로 같이 하기: 차례가 바뀌면 보드를 돌려 지금 차례인 사람이 아래로
-  if (view.L.kind === '2p-port' && cfg.mode === '2p' && view.L.view !== p) await flipTo();
   refreshActive();
   if (isAI(p)) {
     busy = true; refreshActive();
@@ -140,19 +137,6 @@ async function nextTurn() {
     const m = chooseMove(game, cfg.level);
     await doMove(m);
   }
-}
-
-async function flipTo() {
-  const stage = $('#stage');
-  busy = true;
-  stage.classList.add('flipping');
-  await sleep(720);
-  stage.style.transition = 'none';
-  stage.classList.remove('flipping');
-  buildView(view.logLines);
-  void stage.offsetWidth;
-  stage.style.transition = '';
-  busy = false;
 }
 
 // ───────── 칸 누르기 ─────────
@@ -232,7 +216,7 @@ async function doMove(local) {
   save();
   await animate(before, res);
   busy = false;
-  if (!game.over && game.current !== p && !(view.L.kind === '2p-port' && cfg.mode === '2p')) banner(`${nameOf(game.current)} 차례`, game.current, true);
+  if (!game.over && game.current !== p) banner(`${nameOf(game.current)} 차례`, game.current, true);
   nextTurn();
 }
 

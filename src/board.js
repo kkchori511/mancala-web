@@ -274,7 +274,7 @@ export class BoardView {
   // 플레이어 p가 읽는 방향 각도
   textRot(p) {
     if (this.L.kind === '4p-tablet') return this.L.seatAngle[p];
-    if (this.L.kind === '2p-land') return p === 1 ? 180 : 0;
+    if (this.L.kind === '2p-land' || this.L.kind === '2p-port') return p === 1 ? 180 : 0;
     return 0;
   }
 

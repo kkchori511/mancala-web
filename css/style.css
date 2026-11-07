@@ -48,8 +48,7 @@ h2 { margin: 0 0 4px; }
 .resume { display: flex; align-items: center; gap: 12px; color: var(--muted); }
 
 /* 게임 화면 */
-#stage { position: absolute; inset: calc(var(--safe-t) + 8px) calc(var(--safe-r) + 8px) calc(var(--safe-b) + 8px) calc(var(--safe-l) + 8px); display: flex; align-items: center; justify-content: center; transition: transform .7s cubic-bezier(.6, 0, .3, 1); }
-#stage.flipping { transform: rotate(180deg); }
+#stage { position: absolute; inset: calc(var(--safe-t) + 8px) calc(var(--safe-r) + 8px) calc(var(--safe-b) + 8px) calc(var(--safe-l) + 8px); display: flex; align-items: center; justify-content: center; }
 .board-svg { width: 100%; height: 100%; display: block; }
 .menu-btn { position: absolute; top: calc(var(--safe-t) + 8px); left: calc(var(--safe-l) + 8px); width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: rgba(251, 248, 243, .9); font-size: 20px; z-index: 5; }
 #overlay { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
