@@ -66,10 +66,10 @@ function run(cfg, strat) {
 }
 
 const B = { players: 4, pits: 5, seeds: 4 };
+const F = (b) => ({ ...B, noExtraMoves: 2, storeBonus: b, label: `F. 1·2번 첫수 추가턴 없음 + ${b.join('/')}` });
 const configs = [
-  { ...B, noExtraMoves: 4, label: 'B. 모두 첫 턴 추가턴 없음' },
-  { ...B, noExtraMoves: 4, storeBonus: [0, 1, 2, 3], label: 'B2. B + 시작점수 0/1/2/3' },
-  { ...B, noExtraMoves: 1, storeBonus: [0, 1, 2, 3], label: 'E2. A + 시작점수 0/1/2/3' },
+  { ...B, noExtraMoves: 2, label: 'F. 1·2번 첫수 추가턴 없음 (점수 보정 없음)' },
+  F([0, 1, 0, 0]), F([0, 1, 0, 1]), F([0, 1, 1, 1]), F([0, 2, 1, 1]),
 ];
 const rows = [];
 for (const cfg of configs) for (const s of Object.keys(strategies)) rows.push(run(cfg, s));
