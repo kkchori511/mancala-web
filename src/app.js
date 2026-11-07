@@ -5,6 +5,10 @@ import { BoardView, PLAYER_COLORS } from './board.js';
 import { play, setSound, unlockAudio } from './sound.js';
 import { BALL_DEFS, ballSVG } from './balls.js';
 
+// 온라인 모듈은 처음 쓸 때만 불러옴
+let onlineMod = null;
+const online = async () => (onlineMod ??= await import('./online.js'));
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
@@ -20,12 +24,14 @@ setSound(settings.sound, settings.volume);
 const hop = () => (settings.speed === 'fast' ? 130 : 240);
 
 // ───────── 상태 ─────────
-let cfg = null; // { mode:'2p'|'ai'|'4p', display, level, names, start }
+let cfg = null; // { mode:'2p'|'ai'|'4p'|'online', display, level, names, start, me, code, round }
 let game = null;
 let view = null;
 let busy = false;
 let pendingConfirm = null;
 let wakeLock = null;
+let net = null; // 온라인 방 상태 { code, seat, room, queue, queued, pumping, stops, ... }
+const ONLINE_KEY = 'mancala.online.v1';
 
 const isPortrait = () => window.innerHeight > window.innerWidth;
 // 4인: 태블릿·컴퓨터(기기 화면의 짧은 변 600px 이상)에서만, 가로로 들었을 때 진행
@@ -37,10 +43,12 @@ function updateRotateHint() {
 }
 const nameOf = (p) => cfg.names[p];
 const isAI = (p) => cfg.mode === 'ai' && p === 1;
+const isRemote = (p) => cfg.mode === 'online' && p !== cfg.me;
+const turnText = (p) => (cfg.mode === 'online' && p === cfg.me ? '내 차례' : `${nameOf(p)} 차례`);
 
 // ───────── 화면 전환 ─────────
 function show(id) {
-  ['start', 'fourPick', 'game'].forEach((s) => $('#' + s).classList.toggle('hidden', s !== id));
+  ['start', 'fourPick', 'online', 'game'].forEach((s) => $('#' + s).classList.toggle('hidden', s !== id));
   updateRotateHint();
 }
 
@@ -64,6 +72,7 @@ function readNames(mode) {
 
 // ───────── 저장 / 이어 하기 ─────────
 function save() {
+  if (cfg?.mode === 'online') return; // 온라인은 서버에 기록됨
   if (!game || game.over) { localStorage.removeItem(SAVE_KEY); return; }
   localStorage.setItem(SAVE_KEY, JSON.stringify({ cfg, game, log: view?.logLines ?? [] }));
 }
@@ -85,6 +94,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 // ───────── 보드 만들기 ─────────
 function makeLayout() {
   if (cfg.mode === '4p') return layout4p(cfg.display);
+  if (cfg.mode === 'online') return isPortrait() ? layout2pPortrait(cfg.me) : layout2pLandscape(cfg.me); // 내 칸이 아래
   if (isPortrait()) {
     // 마주 보고 하기: P1(사람)이 아래, P2가 위. 보드는 돌리지 않음
     return layout2pPortrait(0);
@@ -93,7 +103,7 @@ function makeLayout() {
 }
 
 function buildView(logLines = []) {
-  view = new BoardView($('#stage'), { layout: makeLayout(), players: game.players, names: cfg.names, settings });
+  view = new BoardView($('#stage'), { layout: makeLayout(), players: game.players, names: cfg.names, settings, upright: cfg.mode === 'online' });
   $('#game').dataset.kind = view.L.kind;
   view.logLines = logLines;
   if (view.L.log) view.renderLog();
@@ -106,7 +116,7 @@ function refreshActive() {
   if (!view) return;
   const p = game.over ? -1 : game.current;
   const sel = [];
-  if (!game.over && !isAI(p) && !busy) for (const m of legalMoves(game)) sel.push(base(game, p) + m);
+  if (!game.over && !isAI(p) && !isRemote(p) && !busy) for (const m of legalMoves(game)) sel.push(base(game, p) + m);
   view.setActive(p, { selectable: sel });
   // 마주 보는 2인: 차례인 사람이 가운데 칸 번호를 바로 읽도록
   if (cfg.mode === '2p' && p >= 0) view.facePits(p);
@@ -148,12 +158,13 @@ function onCell(i) {
   if (busy || game.over) return;
   const p = game.current;
   if (isAI(p)) return;
+  if (isRemote(p)) { play('deny'); return; }
   const cell = view.L.cells[i];
   const local = i - base(game, p);
   if (cell.kind !== 'pit' || cell.owner !== p || game.board[i] === 0) {
     play('deny'); view.shake(i); return;
   }
-  if (!settings.confirm) { closeConfirm(); doMove(local); return; }
+  if (!settings.confirm) { closeConfirm(); playMove(local); return; }
   openConfirm(i, local);
 }
 
@@ -196,7 +207,7 @@ function openConfirm(i, local) {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (!act) return;
     closeConfirm();
-    if (act === 'yes') doMove(local);
+    if (act === 'yes') playMove(local);
   });
   pendingConfirm = { el, i, previewIdx };
 }
@@ -209,6 +220,18 @@ function closeConfirm() {
   pendingConfirm = null;
 }
 
+// 내가 고른 수: 온라인이면 서버로 보내고(도착하면 양쪽이 같이 재생), 아니면 바로 둔다
+function playMove(local) {
+  if (cfg.mode !== 'online') { doMove(local); return; }
+  busy = true; refreshActive();
+  const c = cloneGame(game);
+  applyMove(c, local);
+  online().then((o) => o.sendMove(cfg.code, cfg.round, game.moveCount, cfg.me, local, c.current, c.over)).catch(() => {
+    note('수를 보내지 못했어요. 다시 맞추는 중…', 2500);
+    resyncOnline();
+  });
+}
+
 // ───────── 수 두기 + 애니메이션 ─────────
 async function doMove(local) {
   busy = true;
@@ -219,7 +242,7 @@ async function doMove(local) {
   save();
   await animate(before, res);
   busy = false;
-  if (!game.over && game.current !== p) banner(`${nameOf(game.current)} 차례`, game.current, true);
+  if (!game.over && game.current !== p) banner(turnText(game.current), game.current, true);
   nextTurn();
 }
 
@@ -326,18 +349,24 @@ function banner(text, p, small = false) {
 async function finish() {
   closeConfirm();
   refreshActive();
-  localStorage.removeItem(SAVE_KEY);
+  if (cfg.mode !== 'online') localStorage.removeItem(SAVE_KEY);
   keepAwake(false);
   play('fanfare');
   const s = scores(game);
   const order = s.map((v, p) => ({ p, v })).sort((a, b) => b.v - a.v);
   const top = order[0].v;
   const winners = order.filter((o) => o.v === top);
-  const title = winners.length > 1 ? '무승부!' : `${esc(nameOf(winners[0].p))} 승리!`;
+  let title = winners.length > 1 ? '무승부!' : `${esc(nameOf(winners[0].p))} 승리!`;
+  if (cfg.mode === 'online' && winners.length === 1) title = winners[0].p === cfg.me ? '승리!' : '아쉽게 졌어요';
   await sleep(500);
   openModal(`<h3>${title}</h3>
     <ol class="result-list">${order.map((o, k) => `<li class="${o.v === top ? 'win' : ''}"><span>${k + 1}위</span><span class="dot" style="background:${PLAYER_COLORS[o.p]}"></span><span>${esc(nameOf(o.p))}</span><span class="sc">${o.v}</span></li>`).join('')}</ol>
     <div class="actions"><button class="btn ghost" data-act="home">처음으로</button><button class="btn primary" data-act="again">다시 하기</button></div>`, (act) => {
+    if (cfg.mode === 'online') {
+      if (act === 'again') askRematch();
+      else if (act === 'home') { closeModal(); leaveOnline(); }
+      return;
+    }
     if (act === 'again') {
       const next = { ...cfg, start: (cfg.start + 1) % game.players };
       closeModal(); startGame(next);
@@ -445,12 +474,257 @@ function openMenu() {
     else if (act === 'settings') openSettings();
     else if (act === 'close') closeModal();
     else if (act === 'quit') {
+      if (cfg.mode === 'online') { confirmQuitOnline(); return; }
       openModal(`<h3>그만둘까요?</h3><p>진행 중인 게임은 사라집니다.</p><div class="actions"><button class="btn ghost" data-act="no">아니요</button><button class="btn danger" data-act="yes">그만두기</button></div>`, (a) => {
         if (a === 'yes') { localStorage.removeItem(SAVE_KEY); closeModal(); goHome(); } else closeModal();
       });
     }
   });
 }
+
+
+// ───────── 온라인 ─────────
+const DISCONNECT_WAIT = 30; // 상대 연결이 끊기면 기다리는 초
+const onMsg = (t = '') => { $('#onMsg').textContent = t; };
+const listMoves = (room) => {
+  const m = room?.moves?.[room.state.round];
+  if (!m) return [];
+  return Object.keys(m).map(Number).sort((a, b) => a - b).map((k) => m[k]);
+};
+
+// 화면 위쪽 안내 띠 (ms 뒤 사라짐, 0이면 그대로)
+function note(text, ms = 0, id = 'note') {
+  let el = document.getElementById(id);
+  if (!text) { el?.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = id; el.className = 'net-note'; $('#overlay').appendChild(el); }
+  el.textContent = text;
+  if (ms) setTimeout(() => { if (el.textContent === text) el.remove(); }, ms);
+}
+
+function openOnline() {
+  show('online');
+  $('#onlineForm').classList.remove('hidden');
+  $('#onlineWait').classList.add('hidden');
+  $('#onName').value = localStorage.getItem('mancala.online.name') || '';
+  $('#onCode').value = '';
+  onMsg();
+}
+
+function lockOnlineForm(on) {
+  ['#onCreate', '#onJoin'].forEach((q) => { $(q).disabled = on; });
+}
+
+async function enterRoom(fn) {
+  const name = $('#onName').value.trim();
+  localStorage.setItem('mancala.online.name', name);
+  lockOnlineForm(true); onMsg('연결 중…');
+  try {
+    const o = await online();
+    const { code, seat } = await fn(o, name);
+    onMsg();
+    await attachRoom(code, seat);
+  } catch (e) {
+    onMsg(e?.message && /[가-힣]/.test(e.message) ? e.message : '연결하지 못했어요. 인터넷 연결을 확인해 주세요.');
+    console.warn(e);
+  } finally { lockOnlineForm(false); }
+}
+
+// 방에 붙기: 접속 표시 + 방 지켜보기
+async function attachRoom(code, seat) {
+  const o = await online();
+  detachRoom();
+  localStorage.setItem(ONLINE_KEY, JSON.stringify({ code, seat }));
+  net = { code, seat, room: null, queue: [], queued: 0, pumping: false, round: -1, discDeadline: 0, discTimer: null, resultShown: false, connected: true, stops: [] };
+  net.stops.push(o.goOnline(code, seat, (c) => {
+    if (!net) return;
+    if (c) net.ever = true;
+    net.connected = c;
+    note(c || !net.ever ? '' : '인터넷 연결이 끊겼어요. 다시 연결하는 중…', 0, 'selfNote');
+    checkPresence();
+  }));
+  net.stops.push(o.watchRoom(code, onRoom));
+}
+
+function detachRoom() {
+  if (!net) return;
+  net.stops.forEach((f) => f());
+  clearInterval(net.discTimer);
+  net = null;
+}
+
+function onRoom(room) {
+  if (!net) return;
+  if (!room || !room.state || !room.seats) {
+    // 방이 지워짐(상대가 나가며 정리했거나 오래됨)
+    const wasPlaying = cfg?.mode === 'online' && game && !game.over;
+    detachRoom(); localStorage.removeItem(ONLINE_KEY);
+    if (wasPlaying || $('#online').classList.contains('hidden') === false) {
+      goHome(); if (wasPlaying) openModal('<h3>방이 닫혔어요</h3><p>상대가 방을 나갔어요.</p><div class="actions"><button class="btn primary" data-act="ok">확인</button></div>', () => closeModal());
+    }
+    return;
+  }
+  net.room = room;
+  const st = room.state;
+  if (st.status === 'waiting') {
+    if (net.seat === 0) {
+      show('online');
+      $('#onlineForm').classList.add('hidden');
+      $('#onlineWait').classList.remove('hidden');
+      $('#roomCode').textContent = net.code;
+    }
+    return;
+  }
+  if (st.round !== net.round) { startOnlineRound(room); return; }
+  // 새로 도착한 수를 차례대로 재생
+  const moves = listMoves(room);
+  for (let i = net.queued; i < moves.length; i++) net.queue.push(moves[i]);
+  net.queued = Math.max(net.queued, moves.length);
+  pump();
+  checkPresence();
+  if (st.result && !net.resultShown) showForfeit(st.result);
+}
+
+function onlineCfg(room) {
+  const n = [room.seats[0]?.name || 'P1', room.seats[1]?.name || 'P2'];
+  return { mode: 'online', names: n, start: room.state.start, me: net.seat, code: net.code, round: room.state.round };
+}
+
+// 새 판 시작(또는 다시 들어온 판): 이미 둔 수는 애니메이션 없이 바로 재생
+function startOnlineRound(room) {
+  closeModal(); closeConfirm();
+  cfg = onlineCfg(room);
+  net.round = room.state.round;
+  net.queue = []; net.resultShown = false;
+  game = createGame(twoPlayerConfig(cfg.start));
+  const moves = listMoves(room);
+  for (const mv of moves) {
+    if (game.over || mv.s !== game.current || !game.board[base(game, mv.s) + mv.p]) break;
+    applyMove(game, mv.p);
+  }
+  net.queued = moves.length;
+  busy = false;
+  show('game');
+  buildView();
+  keepAwake(true);
+  if (game.moveCount === 0) banner(game.current === cfg.me ? '내가 먼저 시작' : `${nameOf(game.current)} 먼저 시작`, game.current);
+  else note('다시 연결됐어요', 1800);
+  checkPresence();
+  if (room.state.result) { showForfeit(room.state.result); return; }
+  nextTurn();
+}
+
+async function pump() {
+  if (!net || net.pumping) return;
+  net.pumping = true;
+  try {
+    while (net && net.queue.length) {
+      const mv = net.queue.shift();
+      if (game.over || mv.s !== game.current || !game.board[base(game, mv.s) + mv.p]) { resyncOnline(); break; }
+      closeConfirm();
+      await doMove(mv.p);
+    }
+  } finally { if (net) net.pumping = false; }
+}
+
+// 화면과 서버 기록이 어긋나면 서버 기록으로 다시 맞춤
+function resyncOnline() {
+  if (!net?.room) return;
+  net.round = -1;
+  onRoom(net.room);
+}
+
+// 상대 접속 확인: 끊기면 30초 기다린 뒤 기권 처리
+function checkPresence() {
+  if (!net?.room || cfg?.mode !== 'online') return;
+  const st = net.room.state;
+  const oppOn = !!net.room.online?.[1 - net.seat];
+  const playing = st.status === 'playing' && !st.result && game && !game.over;
+  if (oppOn || !playing || !net.connected) {
+    if (net.discTimer) { clearInterval(net.discTimer); net.discTimer = null; note('', 0, 'discNote'); }
+    return;
+  }
+  if (net.discTimer) return;
+  net.discDeadline = Date.now() + DISCONNECT_WAIT * 1000;
+  const tick = async () => {
+    const left = Math.ceil((net.discDeadline - Date.now()) / 1000);
+    if (left > 0) { note(`${nameOf(1 - net.seat)} 님 연결이 끊겼어요 · ${left}초 기다리는 중`, 0, 'discNote'); return; }
+    clearInterval(net.discTimer); net.discTimer = null; note('', 0, 'discNote');
+    if (!net.room.online?.[1 - net.seat] && net.connected) (await online()).writeResult(net.code, net.seat, 'disconnect').catch(() => {});
+  };
+  net.discTimer = setInterval(tick, 1000);
+  tick();
+}
+
+function showForfeit(result) {
+  net.resultShown = true;
+  closeConfirm();
+  keepAwake(false);
+  const win = result.winner === cfg.me;
+  const opp = esc(nameOf(1 - cfg.me));
+  const why = result.reason === 'quit'
+    ? (win ? `${opp} 님이 그만뒀어요.` : '그만두기로 기권했어요.')
+    : (win ? `${opp} 님의 연결이 ${DISCONNECT_WAIT}초 넘게 끊겼어요.` : `연결이 ${DISCONNECT_WAIT}초 넘게 끊겨 기권 처리됐어요.`);
+  if (win) play('fanfare');
+  openModal(`<h3>${win ? '승리!' : '기권패'}</h3><p>${why}</p>
+    <div class="actions"><button class="btn ghost" data-act="home">처음으로</button><button class="btn primary" data-act="again">다시 하기</button></div>`, (act) => {
+    if (act === 'again') askRematch();
+    else if (act === 'home') { closeModal(); leaveOnline(); }
+  }, false);
+}
+
+async function askRematch() {
+  if (!net?.room) return;
+  if (!net.room.online?.[1 - net.seat]) { note('상대가 방에 없어요', 2000); return; }
+  try { await (await online()).rematch(net.code, net.round); } catch { note('다시 하기를 보내지 못했어요', 2000); }
+}
+
+function confirmQuitOnline() {
+  const playing = net?.room?.state.status === 'playing' && !net.room.state.result && game && !game.over;
+  openModal(`<h3>방에서 나갈까요?</h3><p>${playing ? '진행 중인 게임은 <b>기권패</b>로 처리돼요.' : '방에서 나갑니다.'}</p>
+    <div class="actions"><button class="btn ghost" data-act="no">아니요</button><button class="btn danger" data-act="yes">나가기</button></div>`, async (a) => {
+    if (a !== 'yes') { closeModal(); return; }
+    closeModal();
+    if (playing) { try { await (await online()).writeResult(net.code, 1 - net.seat, 'quit'); } catch { /* 연결 없음 */ } }
+    leaveOnline();
+  });
+}
+
+// 방에서 나가기: 상대도 없으면 방 기록을 지움
+async function leaveOnline() {
+  const n = net;
+  localStorage.removeItem(ONLINE_KEY);
+  if (n) {
+    const alone = !n.room || n.room.state.status === 'waiting' || !n.room.online?.[1 - n.seat];
+    detachRoom();
+    if (alone) { try { await (await online()).deleteRoom(n.code); } catch { /* 무시 */ } }
+  }
+  goHome();
+}
+
+// 새로 고침 뒤: 있던 방으로 자동으로 다시 들어감
+async function resumeOnline() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(ONLINE_KEY) || 'null'); } catch { /* 무시 */ }
+  if (!saved?.code) return;
+  note('온라인 방에 다시 연결하는 중…', 0, 'resumeNote');
+  try {
+    const o = await online();
+    const { code, seat } = await o.joinRoom(saved.code, '', { rejoinOnly: true });
+    note('', 0, 'resumeNote');
+    await attachRoom(code, seat);
+  } catch (e) {
+    console.warn(e);
+    note('', 0, 'resumeNote');
+    localStorage.removeItem(ONLINE_KEY);
+  }
+}
+
+$('#onlineBtn').addEventListener('click', () => { unlockAudio(); openOnline(); });
+$('#onBack').addEventListener('click', () => { if (net) leaveOnline(); else show('start'); });
+$('#onCreate').addEventListener('click', () => enterRoom((o, name) => o.createRoom(name)));
+$('#onJoin').addEventListener('click', () => enterRoom((o, name) => o.joinRoom($('#onCode').value, name)));
+$('#onCode').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4); });
+$('#onCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#onJoin').click(); });
 
 // ───────── 시작 화면 연결 ─────────
 document.addEventListener('click', (e) => {
@@ -495,8 +769,9 @@ window.addEventListener('resize', () => {
 });
 
 // 디버그/테스트용
-window.__mancala = { get game() { return game; }, get cfg() { return cfg; }, get view() { return view; }, get busy() { return busy; }, settings };
+window.__mancala = { get game() { return game; }, get cfg() { return cfg; }, get view() { return view; }, get busy() { return busy; }, get net() { return net; }, settings };
 
 // 시작 화면 장식: 당구공 몇 개
 $('#logoBalls').innerHTML = `<svg viewBox="0 0 300 76"><defs>${BALL_DEFS}</defs>${[[34, 44, 1], [92, 40, 2], [150, 34, 8], [208, 40, 3], [266, 44, 9]].map(([x, y, n]) => ballSVG(n, x, y, n === 8 ? 30 : 24, { top: n === 8 })).join('')}</svg>`;
 refreshStart();
+resumeOnline();

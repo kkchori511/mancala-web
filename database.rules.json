@@ -1,0 +1,54 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() || data.child('createdAt').val() < now - 86400000) && newData.child('seats/0/uid').val() === auth.uid || !newData.exists() && (data.child('seats/0/uid').val() === auth.uid || data.child('seats/1/uid').val() === auth.uid))",
+        ".validate": "$code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "seats": {
+          "$s": {
+            ".write": "auth != null && $s === '1' && !data.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "($s === '0' || $s === '1') && newData.hasChildren(['uid', 'name'])",
+            "uid": { ".validate": "newData.isString()" },
+            "name": { ".validate": "newData.isString() && newData.val().length <= 6" },
+            "$other": { ".validate": false }
+          }
+        },
+        "state": {
+          ".write": "auth != null && (newData.parent().child('seats/0/uid').val() === auth.uid || newData.parent().child('seats/1/uid').val() === auth.uid)",
+          "status": { ".validate": "newData.val() === 'waiting' || newData.val() === 'playing' || newData.val() === 'over'" },
+          "round": { ".validate": "newData.isNumber()" },
+          "start": { ".validate": "newData.val() === 0 || newData.val() === 1" },
+          "turn": { ".validate": "newData.val() === 0 || newData.val() === 1" },
+          "result": {
+            "winner": { ".validate": "newData.val() === 0 || newData.val() === 1" },
+            "reason": { ".validate": "newData.val() === 'quit' || newData.val() === 'disconnect'" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        },
+        "moves": {
+          "$round": {
+            "$i": {
+              ".write": "auth != null && !data.exists() && root.child('rooms/' + $code + '/state/status').val() === 'playing' && root.child('rooms/' + $code + '/state/round').val() + '' === $round && root.child('rooms/' + $code + '/state/turn').val() === newData.child('s').val() && root.child('rooms/' + $code + '/seats/' + newData.child('s').val() + '/uid').val() === auth.uid",
+              ".validate": "newData.hasChildren(['s', 'p']) && $i.matches(/^[0-9]{1,3}$/)",
+              "s": { ".validate": "newData.val() === 0 || newData.val() === 1" },
+              "p": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5 && newData.val() % 1 === 0" },
+              "$other": { ".validate": false }
+            }
+          }
+        },
+        "online": {
+          "$s": {
+            ".write": "auth != null && root.child('rooms/' + $code + '/seats/' + $s + '/uid').val() === auth.uid",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

@@ -15,13 +15,14 @@ function shapeSVG(sh, attrs) {
 }
 
 export class BoardView {
-  constructor(host, { layout, players, names, settings }) {
+  constructor(host, { layout, players, names, settings, upright = false }) {
     this.host = host;
     this.L = layout;
     this.players = players;
     this.names = names;
     this.settings = settings;
     this.counts = [];
+    this.upright = upright; // 온라인: 모든 글자를 내 방향으로
     this.pitRot = 0; // 2인: 가운데 칸 번호 방향(차례인 사람 쪽)
     this.active = -1;
     this.onCell = null;
@@ -155,7 +156,7 @@ export class BoardView {
   setScore(p, n) {
     const cell = this.L.cells.find((c) => c && c.kind === 'store' && c.owner === p);
     if (cell?.score) {
-      const sc = cell.score, tx = sc.x + sc.w / 2, ty = sc.y + sc.h / 2;
+      const sc = { ...cell.score, rot: this.upright ? 0 : cell.score.rot }, tx = sc.x + sc.w / 2, ty = sc.y + sc.h / 2;
       const fs = Math.min(sc.h * 0.62, sc.w * 0.5);
       const amb = /^[69]+$/.test(String(n)) || String(n).includes('6') || String(n).includes('9');
       const el = this.cellEls[this.L.cells.indexOf(cell)].querySelector('.score-text');
@@ -297,6 +298,7 @@ export class BoardView {
 
   // 플레이어 p가 읽는 방향 각도
   textRot(p) {
+    if (this.upright) return 0;
     if (this.L.kind === '4p-tablet') return this.L.seatAngle[p];
     if (this.L.kind === '2p-land' || this.L.kind === '2p-port') return p === 1 ? 180 : 0;
     return 0;

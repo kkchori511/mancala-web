@@ -42,6 +42,10 @@
             <span class="mode-title">넷이 하기</span>
             <span class="mode-desc" id="fourDesc">모니터·태블릿 전용</span>
           </button>
+          <button class="mode-card" id="onlineBtn">
+            <span class="mode-title">온라인으로 하기</span>
+            <span class="mode-desc">각자 기기로, 방 코드로 만나기</span>
+          </button>
         </div>
 
         <details class="names">
@@ -89,6 +93,29 @@
         </button>
       </div>
       <button class="btn ghost" id="fourBack">뒤로</button>
+    </div>
+  </section>
+
+  <!-- 온라인 방 -->
+  <section id="online" class="screen hidden">
+    <div class="start-wrap">
+      <h2>온라인으로 하기</h2>
+      <div id="onlineForm" class="online-panel">
+        <label class="on-field">내 이름 <input id="onName" maxlength="6" placeholder="이름" autocomplete="off"></label>
+        <button class="btn primary big" id="onCreate">방 만들기</button>
+        <div class="on-or">또는 친구가 만든 방에 참가</div>
+        <div class="on-join">
+          <input id="onCode" maxlength="4" placeholder="방 코드 4자리" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button class="btn primary" id="onJoin">참가</button>
+        </div>
+      </div>
+      <div id="onlineWait" class="online-panel hidden">
+        <p>친구에게 방 코드를 알려 주세요</p>
+        <div class="room-code" id="roomCode">----</div>
+        <p class="on-muted">상대가 들어오면 바로 시작해요</p>
+      </div>
+      <p class="on-msg" id="onMsg"></p>
+      <button class="btn ghost" id="onBack">뒤로</button>
     </div>
   </section>
 

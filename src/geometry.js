@@ -6,24 +6,27 @@ const circle = (cx, cy, r) => ({ kind: 'circle', cx, cy, r });
 const rect = (x, y, w, h, rx) => ({ kind: 'rect', x, y, w, h, rx });
 export const shapeCenter = (sh) => (sh.kind === 'circle' ? [sh.cx, sh.cy] : [sh.x + sh.w / 2, sh.y + sh.h / 2]);
 
-// 2인 가로: 아래 줄 = P1(인덱스 0~5, 왼→오), 오른쪽 저장고 6 = P1, 위 줄 = P2(7~12, 오→왼), 왼쪽 저장고 13 = P2
-export function layout2pLandscape() {
+// 2인 가로: 아래 줄 = view(왼→오), 오른쪽 저장고 = view, 위 줄 = 상대(오→왼), 왼쪽 저장고 = 상대
+// view=0이면 P1(인덱스 0~5, 저장고 6)이 아래. 온라인에서 내가 P2면 view=1
+export function layout2pLandscape(view = 0) {
   const vb = { w: 1600, h: 720 };
   const board = { x: 20, y: 20, w: 1560, h: 680, rx: 90 };
   const cells = [];
+  const other = 1 - view;
+  const vb0 = view * 7, ob0 = other * 7;
   const colX = (c) => 375 + c * 170;
   const r = 76, topY = 228, botY = 492;
-  for (let i = 0; i < 6; i++) cells[i] = { kind: 'pit', owner: 0, shape: circle(colX(i), botY, r) };
-  for (let i = 0; i < 6; i++) cells[7 + i] = { kind: 'pit', owner: 1, shape: circle(colX(5 - i), topY, r) };
-  // 저장고: 공이 들어오는 쪽에 공 칸. P1(오른쪽)은 아래에서 들어옴 → 위 점수, 아래 공. P2(왼쪽)는 반대(점대칭)
+  for (let i = 0; i < 6; i++) cells[vb0 + i] = { kind: 'pit', owner: view, shape: circle(colX(i), botY, r) };
+  for (let i = 0; i < 6; i++) cells[ob0 + i] = { kind: 'pit', owner: other, shape: circle(colX(5 - i), topY, r) };
+  // 저장고: 공이 들어오는 쪽에 공 칸. 아래(오른쪽 저장고)는 위 점수·아래 공, 위(왼쪽)는 반대(점대칭)
   const sw = 196, sy = 72, sh = 576, split = 0.3;
-  cells[6] = {
-    kind: 'store', owner: 0, frame: rect(1340, sy, sw, sh, 56),
+  cells[vb0 + 6] = {
+    kind: 'store', owner: view, frame: rect(1340, sy, sw, sh, 56),
     shape: rect(1350, sy + sh * split + 6, sw - 20, sh * (1 - split) - 16, 46),
     score: { x: 1350, y: sy + 10, w: sw - 20, h: sh * split - 14, rot: 0 },
   };
-  cells[13] = {
-    kind: 'store', owner: 1, frame: rect(64, sy, sw, sh, 56),
+  cells[ob0 + 6] = {
+    kind: 'store', owner: other, frame: rect(64, sy, sw, sh, 56),
     shape: rect(74, sy + 10, sw - 20, sh * (1 - split) - 16, 46),
     score: { x: 74, y: sy + sh * (1 - split) + 4, w: sw - 20, h: sh * split - 14, rot: 180 },
   };
@@ -33,7 +36,7 @@ export function layout2pLandscape() {
     [1300, 42, 300, 42], // 위 ←
     [42, 100, 42, 620], // 왼쪽 ↓
   ];
-  return { vb, board, cells, arrows, center: { x: 800, y: 360 }, seatAngle: [0, 180], kind: '2p-land' };
+  return { vb, board, cells, arrows, center: { x: 800, y: 360 }, seatAngle: [0, 180], kind: '2p-land', view };
 }
 
 // 2인 세로(스마트폰): view 플레이어가 아래. 왼쪽 열 = view의 칸(위→아래), 아래 저장고 = view
