@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>만칼라 당구공 견본 (시안 1단계)</title>
+<style>
+  :root { --bg: #3a3a38; --ink: #f4efe6; --muted: #b9c2bb; --oak: #ece0cc; --oak-dark: #b99363; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: var(--bg); color: var(--ink); font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 32px 0 6px; }
+  p.note { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(10, 64px); gap: 10px 14px; }
+  .cell { text-align: center; font-size: 11px; color: var(--muted); }
+  .cell svg { width: 56px; height: 56px; display: block; margin: 0 auto 2px; }
+  .pits { display: flex; flex-wrap: wrap; gap: 18px; }
+  .pit-wrap { text-align: center; font-size: 12px; color: var(--muted); }
+  .pit-wrap svg { width: 130px; height: 130px; display: block; }
+  .board-wrap { max-width: 1100px; }
+  .board-wrap svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+</style>
+</head>
+<body>
+<h1>당구공 견본 · 시안 1단계</h1>
+<p class="note">보드 나무 질감은 Codex 목업에서 따로 정합니다. 여기서는 공 모양, 번호, 줄무늬, 쌓는 방식만 확인용으로 단순한 나무색 위에 그렸습니다.</p>
+
+<h2>1. 번호 공 1~40 (+ 이동 중인 흰 공)</h2>
+<p class="note">1~10번은 모두 다른 색 · 11~20번 흰 가로줄 1개 · 21~30번 2개 · 31~40번 3개 · 41번 이상 4개</p>
+<div class="grid" id="ballGrid"></div>
+
+<h2>2-A. 칸 안에 쌓인 모습 A안 (한 층에 최대 12개, 개수가 많을수록 공이 작아짐)</h2>
+<div class="pits" id="pitRow"></div>
+
+<h2>2-B. 칸 안에 쌓인 모습 B안 (공 크기 고정, 윗층 최대 7개 + 아랫층이 틈새로 비침)</h2>
+<div class="pits" id="pitRowB"></div>
+
+<h2>3. 2인용 보드 배치 예시 (저장고 2분할 + 내 턴 테두리)</h2>
+<p class="note">오른쪽 = 나(청록 테두리가 빛나는 쪽이 지금 차례), 왼쪽 = 상대(점수 180° 회전)</p>
+<div class="board-wrap" id="board"></div>
+
+<script>
+const COLORS = ['#F2C200','#1F4FB8','#D2232A','#5B2C8F','#F07A12','#12804A','#7A1E2B','#1A1A1A','#E9579B','#3FB4E5'];
+const NAMES = ['노랑','파랑','빨강','보라','주황','초록','자주','검정','분홍','하늘'];
+let uid = 0;
+
+// 공 하나를 SVG 문자열로 (cx, cy 중심, r 반지름). n=0이면 흰 큐볼
+function ball(n, cx, cy, r, dim = 0) {
+  const id = 'b' + (uid++);
+  const base = n === 0 ? '#F6F3EA' : COLORS[(n - 1) % 10];
+  const stripes = n === 0 ? 0 : Math.min(4, Math.floor((n - 1) / 10));
+  let s = `<defs>
+    <radialGradient id="${id}g" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+      <stop offset=".35" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".45"/>
+    </radialGradient>
+    <clipPath id="${id}c"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+  </defs>
+  <ellipse cx="${cx + r * .12}" cy="${cy + r * .9}" rx="${r * .85}" ry="${r * .25}" fill="#000" opacity=".22"/>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="${base}"/>`;
+  if (stripes) {
+    const h = r * 2 * 0.1;
+    s += `<g clip-path="url(#${id}c)">`;
+    for (let i = 0; i < stripes; i++) {
+      const y = cy - r + (2 * r) * (i + 1) / (stripes + 1);
+      s += `<rect x="${cx - r}" y="${y - h / 2}" width="${2 * r}" height="${h}" fill="#fff"/>`;
+    }
+    s += `</g>`;
+  }
+  if (n > 0) {
+    const fs = n >= 10 ? r * .52 : r * .62;
+    s += `<circle cx="${cx}" cy="${cy}" r="${r * .46}" fill="#fff"/>
+      <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-weight="700" font-size="${fs}" fill="#111">${n}</text>`;
+  }
+  s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}g)"/>`;
+  if (dim) s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#2a1a0a" opacity="${dim}"/>`;
+  return s;
+}
+
+// 칸 안 배치: 가운데 1개(최고 번호, 살짝 크게) + 둘레 링(겹치지 않게). 링 공은 번호 작은 것부터 12시 방향에서 시계 방향.
+function pit(count, cx, cy, R) {
+  let s = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#ddcbae"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#pitShade)"/>`;
+  if (!count) return s;
+  const shown = Math.min(count, 12), k = shown - 1;
+  // 링 반지름(공 반지름 b 단위): 공끼리 닿지 않을 만큼
+  const ringU = k === 0 ? 0 : Math.max(2.2, 1.12 / Math.sin(Math.PI / Math.max(k, 2)));
+  const b = Math.min(R * 0.36, (R * 0.9) / (ringU + 1));
+  const pts = [];
+  for (let i = 0; i < k; i++) {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / k + (k === 2 ? Math.PI / 2 : 0);
+    pts.push([Math.cos(a) * ringU * b, Math.sin(a) * ringU * b]);
+  }
+  let ox = 0;
+  if (k === 1) { pts[0] = [-b * 1.05, 0]; ox = b * 1.05; }
+  pts.forEach(([x, y], i) => { s += ball(count - shown + 1 + i, cx + x, cy + y, b); });
+  s += ball(count, cx + ox, cy, k ? b * 1.15 : b);
+  return s;
+}
+
+// B안: 공 크기 고정. 윗층은 가운데 1 + 둘레 6(육각형), 7개를 넘으면 아랫층 공이 틈새로 살짝 비침(최대 6개)
+function pitB(count, cx, cy, R) {
+  let s = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#ddcbae"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#pitShade)"/>`;
+  if (!count) return s;
+  const b = R * 0.27;
+  const lower = Math.min(Math.max(count - 7, 0), 6);
+  for (let i = 0; i < lower; i++) {
+    const a = -Math.PI / 2 + Math.PI / 6 + i * Math.PI / 3;
+    s += ball(count - 7 - lower + 1 + i, cx + Math.cos(a) * 2.45 * b, cy + Math.sin(a) * 2.45 * b, b * 0.95, 0.35);
+  }
+  const k = Math.min(count, 7) - 1;
+  for (let i = 0; i < k; i++) {
+    let x, y;
+    if (k === 1) { x = -1.15 * b; y = 0; }
+    else { const a = -Math.PI / 2 + i * 2 * Math.PI / 6 * (6 / Math.max(k, 3)) ; x = Math.cos(a) * 2.2 * b; y = Math.sin(a) * 2.2 * b; }
+    s += ball(count - k + i, cx + x, cy + y, b);
+  }
+  const tx = cx + (k === 1 ? 1.15 * b : 0), tr = b * 1.4;
+  s += `<circle cx="${tx}" cy="${cy}" r="${tr + 2.5}" fill="#fff" opacity=".85"/>`;
+  s += ball(count, tx, cy, tr);
+  return s;
+}
+
+const SHADE = `<defs><radialGradient id="pitShade" cx="50%" cy="40%" r="60%">
+  <stop offset="0" stop-color="#000" stop-opacity=".05"/><stop offset=".8" stop-color="#000" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient></defs>`;
+
+// 1. 공 목록
+const grid = document.getElementById('ballGrid');
+let html = '';
+for (let n = 1; n <= 40; n++) {
+  html += `<div class="cell"><svg viewBox="0 0 60 60">${ball(n, 30, 28, 24)}</svg>${n}${n <= 10 ? ' ' + NAMES[n - 1] : ''}</div>`;
+}
+html += `<div class="cell"><svg viewBox="0 0 60 60">${ball(0, 30, 28, 24)}</svg>이동 중</div>`;
+html += `<div class="cell"><svg viewBox="0 0 60 60">${ball(45, 30, 28, 24)}</svg>45</div>`;
+grid.innerHTML = html;
+
+// 2. 칸 예시
+const pr = document.getElementById('pitRow');
+pr.innerHTML = [1, 2, 3, 4, 5, 7, 9, 12, 15, 27].map(c =>
+  `<div class="pit-wrap"><svg viewBox="0 0 130 130"><rect width="130" height="130" rx="12" fill="#ece0cc"/>${SHADE}${pit(c, 65, 65, 56)}</svg>${c}개</div>`).join('');
+
+document.getElementById('pitRowB').innerHTML = [1, 2, 3, 4, 5, 7, 9, 12, 15, 27].map(c =>
+  `<div class="pit-wrap"><svg viewBox="0 0 130 130"><rect width="130" height="130" rx="12" fill="#ece0cc"/>${SHADE}${pitB(c, 65, 65, 56)}</svg>${c}개</div>`).join('');
+
+// 3. 보드 예시
+function store(x, y, w, h, count, score, active, flip) {
+  const ballH = h * 0.7, R = w / 2 - 6;
+  let s = '';
+  // 저장고 = 하나의 둥근 틀(공 칸 + 점수 칸). 내 턴 테두리는 같은 모서리 곡률로 틀을 감쌈
+  const rr = w * 0.32, pad = 7;
+  if (active) s += `<rect x="${x - 7}" y="${y - 7}" width="${w + 14}" height="${h + 14}" rx="${rr + 7}" fill="none" stroke="#2ad1c0" stroke-width="5" filter="url(#glow)"/>`;
+  s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rr}" fill="#e2d3b9"/>
+        <rect x="${x + pad}" y="${y + pad}" width="${w - 2 * pad}" height="${ballH - pad}" rx="${rr - pad}" fill="#ddcbae"/>
+        <rect x="${x + pad}" y="${y + pad}" width="${w - 2 * pad}" height="${ballH - pad}" rx="${rr - pad}" fill="url(#pitShade)"/>
+        <rect x="${x + pad}" y="${y + ballH + pad}" width="${w - 2 * pad}" height="${h - ballH - 2 * pad}" rx="${rr - pad}" fill="#efe4d2"/>`;
+  // 저장고 공: 2열로 아래부터 쌓고, 최대 14개 표시, 맨 위 가운데에 최고 번호
+  const shown = Math.min(count, 14), b = w * 0.2;
+  const pts = [];
+  for (let i = 0; i < shown - 1; i++) {
+    const row = Math.floor(i / 2), col = i % 2;
+    pts.push([x + w / 2 + (col ? b * 1.05 : -b * 1.05) + (row % 2 ? b * 0.15 : 0), y + ballH - b * 1.4 - row * b * 1.55]);
+  }
+  const topY = pts.length ? Math.min(...pts.map(p => p[1])) - b * 0.7 : y + ballH - b * 1.4;
+  pts.push([x + w / 2, Math.max(topY, y + b * 1.3)]);
+  pts.forEach(([px, py], i) => { s += ball(count - shown + 1 + i, px, py, b); });
+  const tx = x + w / 2, ty = y + ballH + (h - ballH) / 2;
+  const fs = w * 0.42;
+  s += `<g ${flip ? `transform="rotate(180 ${tx} ${ty})"` : ''}>
+    <text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="${fs}" font-weight="700" fill="#3b2a17" font-family="Arial Rounded MT Bold, Arial, sans-serif">${score}</text>
+    <rect x="${tx - fs * 0.35}" y="${ty + fs * 0.42}" width="${fs * 0.7}" height="${fs * 0.07}" rx="2" fill="#3b2a17"/></g>`;
+  return s;
+}
+const W = 1100, H = 420, sw = 110, gap = 14, pr2 = 56;
+const topRow = [4, 5, 0, 7, 3, 11], botRow = [2, 6, 4, 1, 9, 4];
+let bs = `<svg viewBox="0 0 ${W} ${H}">${SHADE}<defs><filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="40" fill="#ece0cc"/>`;
+bs += store(30, 40, sw, H - 80, 9, 9, false, true);
+bs += store(W - 30 - sw, 40, sw, H - 80, 12, 12, true, false);
+const startX = 30 + sw + 40 + pr2, stepX = (W - 2 * (30 + sw + 40) - 2 * pr2) / 5;
+for (let i = 0; i < 6; i++) {
+  bs += pitB(topRow[5 - i], startX + i * stepX, 120, pr2);
+  bs += pitB(botRow[i], startX + i * stepX, H - 120, pr2);
+}
+bs += `</svg>`;
+document.getElementById('board').innerHTML = bs;
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{
+  "board_canvas_size" : [
+    880,
+    880
+  ],
+  "files" : {
+    "4p-monitor-capture.png" : [
+      1920,
+      1080
+    ],
+    "4p-monitor.png" : [
+      1920,
+      1080
+    ],
+    "4p-tablet-capture.png" : [
+      2048,
+      1536
+    ],
+    "4p-tablet.png" : [
+      2048,
+      1536
+    ],
+    "phone-p1-turn.png" : [
+      1080,
+      2340
+    ],
+    "phone-p2-turn.png" : [
+      1080,
+      2340
+    ]
+  },
+  "monitor_board_origin" : [
+    520,
+    100
+  ],
+  "phone_p1_pit_counts_row_major" : [
+    7,
+    1,
+    1,
+    7,
+    7,
+    0,
+    7,
+    1,
+    1,
+    7,
+    0,
+    7
+  ],
+  "phone_p2_pit_counts_row_major" : [
+    7,
+    0,
+    7,
+    1,
+    1,
+    7,
+    0,
+    7,
+    7,
+    1,
+    1,
+    7
+  ],
+  "phone_rotation_mapping" : "(r,c) -> (5-r,1-c); numerals remain upright; store compartments remain score-left\/balls-right",
+  "pit_centers_along_edge" : [
+    236,
+    338,
+    440,
+    542,
+    644
+  ],
+  "pit_diameter" : 96,
+  "pit_edge_coordinate" : [
+    100,
+    780
+  ],
+  "pixel_comparisons" : [
+    {
+      "compared_pixels" : 710912,
+      "different_pixels" : 0,
+      "excluded" : "store-score text areas; normal scene center turn marker",
+      "scene" : "normal"
+    },
+    {
+      "compared_pixels" : 740992,
+      "different_pixels" : 0,
+      "excluded" : "store-score text areas; normal scene center turn marker",
+      "scene" : "capture"
+    }
+  ],
+  "players" : {
+    "P1" : "bottom \/ bottom-right \/ teal",
+    "P2" : "right \/ top-right \/ coral",
+    "P3" : "top \/ top-left \/ navy",
+    "P4" : "left \/ bottom-left \/ lime"
+  },
+  "store_size" : [
+    156,
+    156
+  ],
+  "tablet_board_origin" : [
+    584,
+    328
+  ]
+}
