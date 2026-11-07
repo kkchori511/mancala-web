@@ -27,19 +27,26 @@ let pendingConfirm = null;
 let wakeLock = null;
 
 const isPortrait = () => window.innerHeight > window.innerWidth;
-const canFour = () => Math.min(window.innerWidth, window.innerHeight) >= 700 && window.innerWidth > window.innerHeight;
+// 4인: 태블릿·컴퓨터(기기 화면의 짧은 변 600px 이상)에서만, 가로로 들었을 때 진행
+const bigDevice = () => Math.min(screen.width, screen.height) >= 600;
+const canFour = () => bigDevice();
+function updateRotateHint() {
+  const need = (cfg?.mode === '4p' && !$('#game').classList.contains('hidden')) || !$('#fourPick').classList.contains('hidden');
+  $('#rotateHint').classList.toggle('hidden', !(need && isPortrait()));
+}
 const nameOf = (p) => cfg.names[p];
 const isAI = (p) => cfg.mode === 'ai' && p === 1;
 
 // ───────── 화면 전환 ─────────
 function show(id) {
   ['start', 'fourPick', 'game'].forEach((s) => $('#' + s).classList.toggle('hidden', s !== id));
+  updateRotateHint();
 }
 
 function refreshStart() {
   const ok = canFour();
   $('#fourBtn').disabled = !ok;
-  $('#fourDesc').textContent = ok ? '모니터·태블릿 전용' : '가로로 넓은 화면(모니터·태블릿)에서만 가능';
+  $('#fourDesc').textContent = ok ? '모니터·태블릿 전용 (가로)' : '모니터·태블릿에서만 가능';
   const saved = loadSave();
   $('#resumeBox').classList.toggle('hidden', !saved);
   if (saved) {
@@ -506,6 +513,7 @@ let resizeT = null;
 window.addEventListener('resize', () => {
   clearTimeout(resizeT);
   resizeT = setTimeout(() => {
+    updateRotateHint();
     if (!game) { refreshStart(); return; }
     if (cfg.mode !== '4p' && !busy) {
       const want = isPortrait() ? '2p-port' : '2p-land';

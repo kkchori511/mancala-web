@@ -123,3 +123,7 @@ h2 { margin: 0 0 4px; }
 #game[data-kind="2p-port"] #stage { top: calc(var(--safe-t) + 58px); }
 #game[data-kind="2p-port"] .menu-btn { top: calc(var(--safe-t) + 8px); left: calc(var(--safe-l) + 12px); }
 #game[data-kind^="4p"] .menu-btn { left: 50%; transform: translateX(-50%); top: calc(var(--safe-t) + 2px); width: 40px; height: 40px; font-size: 18px; }
+
+.rotate-hint { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 20px; padding: 24px; }
+.rot-icon { font-size: 64px; color: var(--p1); animation: spin 2.4s ease-in-out infinite; }
+@keyframes spin { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(90deg); } }
