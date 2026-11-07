@@ -14,6 +14,7 @@ class H(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8770
+host = sys.argv[2] if len(sys.argv) > 2 else '127.0.0.1'  # 같은 Wi-Fi 기기에서 열려면 0.0.0.0
 socketserver.ThreadingTCPServer.allow_reuse_address = True
-with socketserver.ThreadingTCPServer(('0.0.0.0', port), H) as s:
+with socketserver.ThreadingTCPServer((host, port), H) as s:
     s.serve_forever()
