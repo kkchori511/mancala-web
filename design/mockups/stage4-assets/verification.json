@@ -1,0 +1,84 @@
+{
+  "reference": "design/samples/layout-4p.html; geometry derived by evaluating its SVG generator without a browser",
+  "coordinate_tolerance": 1e-8,
+  "files": {
+    "4p-tablet-v2.png": [
+      2048,
+      1536
+    ],
+    "4p-tablet-v2-capture.png": [
+      2048,
+      1536
+    ],
+    "4p-monitor-v2.png": [
+      1920,
+      1080
+    ],
+    "4p-monitor-v2-capture.png": [
+      1920,
+      1080
+    ],
+    "2p-landscape-v2.png": [
+      1600,
+      900
+    ],
+    "phone-p1-turn-v2.png": [
+      1080,
+      2340
+    ]
+  },
+  "geometry_checks": [
+    {
+      "file": "4p-tablet-v2.png",
+      "geometry_matches_blueprint": true,
+      "pits": 20,
+      "stores": 4,
+      "board_side": 1420,
+      "pit_size": [
+        135.75199999999998,
+        269.8
+      ],
+      "center_ratio": 0.5499999999999999
+    },
+    {
+      "file": "4p-tablet-v2-capture.png",
+      "geometry_matches_blueprint": true,
+      "pits": 20,
+      "stores": 4,
+      "board_side": 1420,
+      "pit_size": [
+        135.75199999999998,
+        269.8
+      ],
+      "center_ratio": 0.5499999999999999
+    },
+    {
+      "file": "4p-monitor-v2.png",
+      "geometry_matches_blueprint": true,
+      "pits": 20,
+      "stores": 4,
+      "board_side": 1010,
+      "pit_size": [
+        96.556,
+        191.9
+      ],
+      "center_ratio": 0.55
+    },
+    {
+      "file": "4p-monitor-v2-capture.png",
+      "geometry_matches_blueprint": true,
+      "pits": 20,
+      "stores": 4,
+      "board_side": 1010,
+      "pit_size": [
+        96.556,
+        191.9
+      ],
+      "center_ratio": 0.55
+    }
+  ],
+  "shared_board": "stage4-assets/board-common.png",
+  "shared_capture": "stage4-assets/board-capture-common.png",
+  "tablet_board_scale": 1,
+  "monitor_board_scale": 0.7112676056338029
+}
