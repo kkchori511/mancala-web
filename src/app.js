@@ -108,6 +108,8 @@ function refreshActive() {
   const sel = [];
   if (!game.over && !isAI(p) && !busy) for (const m of legalMoves(game)) sel.push(base(game, p) + m);
   view.setActive(p, { selectable: sel });
+  // 마주 보는 2인: 차례인 사람이 가운데 칸 번호를 바로 읽도록
+  if (cfg.mode === '2p' && p >= 0) view.facePits(p);
 }
 
 // ───────── 게임 시작 ─────────

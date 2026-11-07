@@ -70,7 +70,7 @@ export function pileSVG(count, shape, opts = {}) {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / Math.max(k, 1) + (k === 1 ? Math.PI / 4 : 0);
       s += ballSVG(count - k + i, cx + Math.cos(a) * R * 0.66, cy + Math.sin(a) * R * 0.66, b);
     }
-    s += ballSVG(count, cx, cy, bigR, { top: true });
+    s += ballSVG(count, cx, cy, bigR, { top: true, numRot: opts.topRot || 0 });
     return s;
   }
 

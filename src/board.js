@@ -22,6 +22,7 @@ export class BoardView {
     this.names = names;
     this.settings = settings;
     this.counts = [];
+    this.pitRot = 0; // 2인: 가운데 칸 번호 방향(차례인 사람 쪽)
     this.active = -1;
     this.onCell = null;
     this.logLines = [];
@@ -124,6 +125,14 @@ export class BoardView {
     }).join('');
   }
 
+  // 2인: 가운데 칸 번호를 플레이어 p가 읽는 방향으로
+  facePits(p) {
+    const r = this.textRot(p);
+    if (r === this.pitRot) return;
+    this.pitRot = r;
+    this.L.cells.forEach((c, i) => { if (c?.kind === 'pit') this.setCount(i, this.counts[i]); });
+  }
+
   // 전체 개수 반영
   setAll(counts) {
     counts.forEach((n, i) => this.setCount(i, n));
@@ -138,6 +147,7 @@ export class BoardView {
     if (cell.kind === 'store') Object.assign(opts, this.players === 4 ? { bigScale: 0.36, smallScale: 0.14 } : { bigScale: 0.44, smallScale: 0.19 });
     // 2인 저장고: 가운데 공 번호는 상대 방향(점수 칸은 주인 방향)
     if (cell.kind === 'store' && this.players === 2) opts.topRot = this.textRot(1 - cell.owner);
+    if (cell.kind === 'pit' && this.players === 2) opts.topRot = this.pitRot;
     el.querySelector('.pile').innerHTML = pileSVG(n, cell.shape, opts);
     if (cell.kind === 'store') this.setScore(cell.owner, n);
   }
