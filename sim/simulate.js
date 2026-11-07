@@ -67,14 +67,8 @@ function run(cfg, strat) {
 
 const B = { players: 4, pits: 5, seeds: 4 };
 const configs = [
-  { ...B, label: '보정 없음' },
-  { ...B, noExtraMoves: 1, label: 'A. 첫 수만 추가턴 없음' },
-  { ...B, noExtraMoves: 4, label: 'B. 첫 바퀴 전원 추가턴 없음' },
-  { ...B, storeBonus: [0, 1, 2, 3], label: 'C. 시작점수 0/1/2/3' },
-  { ...B, storeBonus: [0, 2, 3, 4], label: 'D. 시작점수 0/2/3/4' },
   { ...B, noExtraMoves: 1, storeBonus: [0, 1, 2, 2], label: 'E. A + 시작점수 0/1/2/2' },
-  { players: 2, pits: 6, seeds: 4, label: '2인 보정 없음' },
-  { players: 2, pits: 6, seeds: 4, noExtraMoves: 1, label: '2인 A. 첫 수 추가턴 없음' },
+  { ...B, noExtraMoves: 1, storeBonus: [0, 1, 2, 3], label: 'E2. A + 시작점수 0/1/2/3' },
 ];
 const rows = [];
 for (const cfg of configs) for (const s of Object.keys(strategies)) rows.push(run(cfg, s));
