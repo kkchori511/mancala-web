@@ -2,13 +2,16 @@
 // 보드는 하나의 고리 배열이다. 플레이어 p의 칸: base(p)..base(p)+pits-1, 저장고: base(p)+pits
 // 분배 방향은 인덱스 증가 방향(반시계)이며, 다른 사람의 저장고는 건너뛴다.
 
-export function createGame({ players = 2, pits = 6, seeds = 4 } = {}) {
+// noExtraMoves: 게임 처음 n수 동안은 추가 턴 없음 (선 차례 보정)
+// storeBonus: 자리별 시작 점수 (선 차례 보정)
+export function createGame({ players = 2, pits = 6, seeds = 4, noExtraMoves = 0, storeBonus = null } = {}) {
   const size = players * (pits + 1);
   const board = new Array(size).fill(0);
   for (let p = 0; p < players; p++) {
     for (let i = 0; i < pits; i++) board[p * (pits + 1) + i] = seeds;
   }
-  return { players, pits, seeds, board, current: 0, over: false, moveCount: 0 };
+  if (storeBonus) for (let p = 0; p < players; p++) board[p * (pits + 1) + pits] = storeBonus[p] ?? 0;
+  return { players, pits, seeds, board, current: 0, over: false, moveCount: 0, noExtraMoves };
 }
 
 export const base = (g, p) => p * (g.pits + 1);
@@ -53,7 +56,7 @@ export function applyMove(g, localPit) {
   const last = idx;
 
   if (last === myStore) {
-    result.extraTurn = true;
+    result.extraTurn = g.moveCount >= (g.noExtraMoves ?? 0);
   } else if (ownerOf(g, last) === p && g.board[last] === 1) {
     const opp = oppositeIndex(g, last);
     if (g.board[opp] > 0) {

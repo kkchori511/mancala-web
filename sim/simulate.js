@@ -49,7 +49,7 @@ function run(cfg, strat) {
   }
   const pct = (x) => (100 * x / GAMES).toFixed(1);
   return {
-    설정: `${N}인×${cfg.pits}칸×${cfg.seeds}개`,
+    설정: cfg.label,
     전략: strat,
     자리별승률: winShare.map(pct).join(' / '),
     평균수: (moves / GAMES).toFixed(1),
@@ -65,12 +65,16 @@ function run(cfg, strat) {
   };
 }
 
+const B = { players: 4, pits: 5, seeds: 4 };
 const configs = [
-  { players: 2, pits: 6, seeds: 4 },
-  { players: 4, pits: 5, seeds: 4 },
-  { players: 4, pits: 6, seeds: 4 },
-  { players: 4, pits: 5, seeds: 3 },
-  { players: 4, pits: 5, seeds: 5 },
+  { ...B, label: '보정 없음' },
+  { ...B, noExtraMoves: 1, label: 'A. 첫 수만 추가턴 없음' },
+  { ...B, noExtraMoves: 4, label: 'B. 첫 바퀴 전원 추가턴 없음' },
+  { ...B, storeBonus: [0, 1, 2, 3], label: 'C. 시작점수 0/1/2/3' },
+  { ...B, storeBonus: [0, 2, 3, 4], label: 'D. 시작점수 0/2/3/4' },
+  { ...B, noExtraMoves: 1, storeBonus: [0, 1, 2, 2], label: 'E. A + 시작점수 0/1/2/2' },
+  { players: 2, pits: 6, seeds: 4, label: '2인 보정 없음' },
+  { players: 2, pits: 6, seeds: 4, noExtraMoves: 1, label: '2인 A. 첫 수 추가턴 없음' },
 ];
 const rows = [];
 for (const cfg of configs) for (const s of Object.keys(strategies)) rows.push(run(cfg, s));
